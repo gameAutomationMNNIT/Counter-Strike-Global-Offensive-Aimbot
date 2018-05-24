@@ -130,10 +130,11 @@ void Trigger()
 	}
 }
 
-void getAllData()
+bool getAllData()
 {
 	float min = 9999999;
 	NearestPlayer = -1;
+	bool flag = false;
 	for(int i=0;i<32;i++)
 	{
 		DWORD CurrentBaseAddress = Memory.Read<DWORD>(ClientMemoryAddress + EntityBase + (i * MemoryIncrement));
@@ -145,10 +146,12 @@ void getAllData()
 		entity[i].distance = sqrt(  pow((player.x-entity[i].x),2) + pow((player.y-entity[i].y),2) + pow((player.z-entity[i].z),2)  );
 		if(entity[i].health > 0 && player.teamID != entity[i].teamID && entity[i].distance < min)
 		{
+			flag = true;
 			NearestPlayer = i;
 			min = entity[i].distance;
 		}
 	}
+	return flag;
 }
 
 void getMyData()
@@ -226,8 +229,7 @@ int main()
 	while(true)
     {
 		getMyData();
-		getAllData();
-		if(autoaim)
+		if(autoaim && getAllData())
 			AimtoNearest();
 		if(autofire)
 			Trigger();
