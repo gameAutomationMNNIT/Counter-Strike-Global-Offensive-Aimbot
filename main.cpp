@@ -135,7 +135,7 @@ bool getAllData()
 	float min = 9999999;
 	NearestPlayer = -1;
 	bool flag = false;
-	for(int i=0;i<32;i++)
+	for(int i=1;i<32;i++)
 	{
 		DWORD CurrentBaseAddress = Memory.Read<DWORD>(ClientMemoryAddress + EntityBase + (i * MemoryIncrement));
 		entity[i].x = Memory.Read<float>(CurrentBaseAddress + PositionOffset);
