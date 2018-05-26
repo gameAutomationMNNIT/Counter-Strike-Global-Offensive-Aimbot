@@ -2,23 +2,26 @@
 #include <iostream>
 #include <TlHelp32.h>
 #include <sstream>
+#include "constant.cpp"
 
 //Memory vars
 DWORD ClientMemoryAddress;
 DWORD ServerMemoryAddress;
 DWORD EngineMemoryAddress;
-
 //Global vars
 DWORD LocalPlayer;
 DWORD client;
 int LocalTeam;
 int CrossHairID;
-int NearestPlayer = -1;
+int NthNearest = 0;	//0 means nearest enemy
+int ycorr = 0;
+int enemyID[32];
+float enemyDistance[32];
 //Function Definations
 void Trigger();
-void getAllData();
+int getAllData();
 void getMyData();
-void AimtoNearest();
+void AimtoNearest(int);
 void changeAngle(float, float);
 //externs
 extern const DWORD PlayerBase;
@@ -130,28 +133,41 @@ void Trigger()
 	}
 }
 
-bool getAllData()
+int getAllData()
 {
-	float min = 9999999;
-	NearestPlayer = -1;
+	int c=0;
 	bool flag = false;
-	for(int i=1;i<32;i++)
+	for(int i=1 ; i<32 ; i++)
 	{
 		DWORD CurrentBaseAddress = Memory.Read<DWORD>(ClientMemoryAddress + EntityBase + (i * MemoryIncrement));
 		entity[i].x = Memory.Read<float>(CurrentBaseAddress + PositionOffset);
 		entity[i].y = Memory.Read<float>(CurrentBaseAddress + PositionOffset + 4);
-		entity[i].z = Memory.Read<float>(CurrentBaseAddress + PositionOffset + 8) - 10;
+		entity[i].z = Memory.Read<float>(CurrentBaseAddress + PositionOffset + 8);
 		entity[i].health = Memory.Read<int>(CurrentBaseAddress + HealthOffset);
 		entity[i].teamID = Memory.Read<int>(CurrentBaseAddress + TeamOffset);
 		entity[i].distance = sqrt(  pow((player.x-entity[i].x),2) + pow((player.y-entity[i].y),2) + pow((player.z-entity[i].z),2)  );
-		if(entity[i].health > 0 && player.teamID != entity[i].teamID && entity[i].distance < min)
+		if(entity[i].health > 0 && player.teamID != entity[i].teamID)
 		{
-			flag = true;
-			NearestPlayer = i;
-			min = entity[i].distance;
+			enemyDistance[c] = entity[i].distance;
+			enemyID[c++] = i;
 		}
 	}
-	return flag;
+	for(int i=0;i<c-1;i++)
+	{
+		for(int j=i+1;j<c;j++)
+		{
+			if(enemyDistance[j]<enemyDistance[i])
+			{
+				enemyDistance[i]=enemyDistance[i]+enemyDistance[j];
+				enemyDistance[j]=enemyDistance[i]-enemyDistance[j];
+				enemyDistance[i]=enemyDistance[i]-enemyDistance[j];
+				enemyID[i] = enemyID[i] + enemyID[j];
+				enemyID[j] = enemyID[i] - enemyID[j];
+				enemyID[i] = enemyID[i] - enemyID[j];
+			}
+		}
+	}
+	return c;
 }
 
 void getMyData()
@@ -165,16 +181,16 @@ void getMyData()
 	player.distance = -1;
 }
 
-void AimtoNearest()
+void AimtoNearest(int i)
 {
-	float distance_X = entity[NearestPlayer].x - player.x;
-    float distance_Y = entity[NearestPlayer].y - player.y;
-	float distance_Z = entity[NearestPlayer].z - player.z;
+	float distance_X = entity[i].x - player.x;
+    float distance_Y = entity[i].y - player.y;
+	float distance_Z = entity[i].z - player.z - ycorr;
     float distance_XY_Plane = sqrt(pow(distance_X, 2) + pow(distance_Y, 2));
 	if((distance_X / distance_XY_Plane) > 1 || (distance_X / distance_XY_Plane) < -1)
 		return;
     float x_r = acos(distance_X / distance_XY_Plane) * 180 / 3.141592;
-    x_r *= (entity[NearestPlayer].y < player.y) ? -1 : 1;
+    x_r *= (entity[i].y < player.y) ? -1 : 1;
     float y_r = -1 * atan(distance_Z / distance_XY_Plane) * 180 / 3.141592;
 	changeAngle((float)x_r, (float)y_r);
 }
@@ -187,8 +203,8 @@ void changeAngle(float xAngle, float yAngle)
 
 int main()
 {
+	int aimto = 0;
 	std::cout<<"Counter Strike Global Offensive Aimbot\n";
-	std::cout<<"Executable version:Client v1.36.3.4 (05.05.2018)\n";
 	std::cout<<"Finding csgo.exe\n";
 	while(Memory.Process("csgo.exe"));
 	std::cout<<"Found csgo.exe\n";
@@ -199,42 +215,46 @@ int main()
 	DWORD LocalPlayer = Memory.Read<DWORD>(ClientMemoryAddress + PlayerBase);
 	LocalTeam = Memory.Read<int>(LocalPlayer + TeamOffset);
 	CrossHairID = Memory.Read<int>(LocalPlayer + CrossHairOffset);
-	flag:
-	std::cout<<"1: AutoAim only\n";
-	std::cout<<"2: AutoFire only\n";
-	std::cout<<"3: AutoAim and AutoFire\n";
-	std::cout<<"4: Exit\n";
 	int choice=0;
 	bool autofire=false, autoaim=false;
-	std::cin>>choice;
-	switch(choice)
-	{
-	case 1:autoaim = true;
-		break;
-	case 2:autofire = true;
-		break;
-	case 3:autoaim = true;	autofire = true;
-		break;
-	case 4:system("pause");
-		exit(0);
-		break;
-	default:std::cout<<"Enter a valid choice\n";
-		goto flag;
-		break;
-	}
 	system("pause");
-	autoaim?std::cout<<"AutoAim: on\n":std::cout<<"AutoAim: off\n";
-	autofire?std::cout<<"AutoFire: on\n":std::cout<<"AutoFire: off\n";
-	std::cout<<"Note: Please disable friendly fire.";
 	while(true)
     {
+		if(GetAsyncKeyState(VK_NUMPAD6)&1)
+			aimto++;
+		if(GetAsyncKeyState(VK_NUMPAD4)&1)
+			aimto--;
+		if(GetAsyncKeyState(VK_NUMPAD5)&1)
+			autoaim=!autoaim;
+		if(GetAsyncKeyState(VK_NUMPAD0)&1)
+			autofire=!autofire;
+		if(GetAsyncKeyState(VK_NUMPAD8)&1)
+			ycorr--;
+		if(GetAsyncKeyState(VK_NUMPAD2)&1)
+			ycorr++;
+		if(ycorr < -20)
+			ycorr = -20;
+		if(ycorr > 50)
+			ycorr = 50;
+		system("cls");
+		autoaim?std::cout<<"AutoAim: on\t\t[NUMPAD5 to toggle]\n":std::cout<<"AutoAim: off\t\t[NUMPAD5 to toggle]\n";
+		autofire?std::cout<<"AutoFire: on\t\t[NUMPAD0 to toggle]\n":std::cout<<"AutoFire: off\t\t[NUMPAD0 to toggle]\n";
+		if(autoaim)
+			std::cout<<"Aimed to "<<aimto+1<<" nearest\t[NUMPAD4 to nearer | NUMPAD6 to farther player]\n";
+		std::cout<<"Aim correction "<<ycorr<<"\t[NUMPAD8,2 to adjust autoaim]\n"<<std::endl;
 		getMyData();
-		if(autoaim && getAllData())
-			AimtoNearest();
+		int noofActivePlayers = getAllData();
+		if(aimto<0)
+			aimto = 0;
+		if(aimto>noofActivePlayers-1)
+			aimto=noofActivePlayers-1;
+		if(autoaim && noofActivePlayers)
+		{	
+			AimtoNearest(enemyID[aimto]);
+		}
 		if(autofire)
 			Trigger();
 	}
 	return 0;
 }
-
 

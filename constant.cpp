@@ -1,5 +1,5 @@
 #include <windows.h>
-
+// for Executable version:Client v1.36.3.4 (05.05.2018)
 //base addresses
 const DWORD PlayerBase = 0xA9ADEC;
 const DWORD EntityBase = 0x4A77B6C;
