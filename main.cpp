@@ -208,7 +208,7 @@ int main()
 	std::cout<<"Finding csgo.exe\n";
 	while(Memory.Process("csgo.exe"));
 	std::cout<<"Found csgo.exe\n";
-	ClientMemoryAddress = Memory.Module("client.dll");
+	ClientMemoryAddress = Memory.Module("client_panorama.dll");
 	ServerMemoryAddress = Memory.Module("server.dll");
 	EngineMemoryAddress = Memory.Module("engine.dll");
 	client = Memory.Read<DWORD>(EngineMemoryAddress + ClientState);
