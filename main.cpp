@@ -121,12 +121,12 @@ void Trigger()
 {
 	DWORD LocalPlayer = Memory.Read<DWORD>(ClientMemoryAddress + PlayerBase);
 	CrossHairID = Memory.Read<int>(LocalPlayer + CrossHairOffset);
-/*				NOT WORKING			*/
-//	DWORD EnemyInCrossHair = Memory.Read<DWORD>(ClientMemoryAddress + EntityBase + ((CrossHairID - 1) * MemoryIncrement));
-//	int EnemyHealth = Memory.Read<int>(EnemyInCrossHair + HealthOffset);
-//	int EnemyTeam = Memory.Read<int>(EnemyInCrossHair + TeamOffset);
-	if (CrossHairID > 0)
-    {
+	DWORD EnemyInCrossHair = Memory.Read<DWORD>(ClientMemoryAddress + EntityBase + ((CrossHairID - 1) * MemoryIncrement));
+	int EnemyHealth = Memory.Read<int>(EnemyInCrossHair + HealthOffset);
+	int EnemyTeam = Memory.Read<int>(EnemyInCrossHair + TeamOffset);
+	LocalTeam = Memory.Read<int>(LocalPlayer + TeamOffset);
+	if (CrossHairID > 0 && EnemyTeam!=LocalTeam && EnemyTeam)
+    	{
 		Sleep(10);
 		mouse_event(MOUSEEVENTF_LEFTDOWN, NULL, NULL, NULL, NULL);
 		mouse_event(MOUSEEVENTF_LEFTUP, NULL, NULL, NULL, NULL);
