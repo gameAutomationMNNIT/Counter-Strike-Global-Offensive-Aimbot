@@ -1,11 +1,13 @@
 #include <windows.h>
-// for Executable version:Client v1.36.6.9 (14.12.2018)
+/* 
+  Updated for game update 22.12.2018
+*/
 //base addresses
-const DWORD PlayerBase = 0xCB3694;		//dwLocalPlayer;
-const DWORD EntityBase = 0x4CC3564;		//dwEntityList;
-const DWORD ClientState = 0x58ACFC;		//dwClientState;
+const DWORD PlayerBase = 0xCBD6B4;		//dwLocalPlayer;
+const DWORD EntityBase = 0x4CCDBFC;		//dwEntityList;
+const DWORD ClientState = 0x58BCFC;		//dwClientState;
 //Offsets with client.dll and playerbase
-const DWORD CrossHairOffset = 0xB390;	//m_iCrosshairId;
+const DWORD CrossHairOffset = 0xB394;	//m_iCrosshairId;
 const DWORD PositionOffset = 0x138;   //m_vecOrigin 
 const DWORD TeamOffset = 0xF4;			  //m_iTeamNum
 const DWORD HealthOffset = 0x100;     //m_iHealth 
